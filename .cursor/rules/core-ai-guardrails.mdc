@@ -37,4 +37,3 @@ Stop and report BLOCKED when:
 - A breaking change is necessary but not approved.
 - A destructive database or data operation appears necessary.
 - Authentication, authorization, payment, financial calculation, audit, or production infrastructure behavior would materially change outside approved scope.
-
