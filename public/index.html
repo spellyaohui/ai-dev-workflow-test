@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>任务看板 · AI 开发工作流</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="logo">✦</div>
+          <div>
+            <h1>任务看板</h1>
+            <p class="subtitle">AI 开发工作流演示 · Task Board</p>
+          </div>
+        </div>
+        <div class="status-pill" id="healthPill">
+          <span class="dot"></span>
+          <span id="healthText">检查中…</span>
+        </div>
+      </header>
+
+      <section class="composer">
+        <form id="createForm">
+          <input
+            id="titleInput"
+            type="text"
+            placeholder="输入新任务标题，例如：接入数据库…"
+            autocomplete="off"
+          />
+          <button type="submit">添加任务</button>
+        </form>
+      </section>
+
+      <main class="board" id="board">
+        <div class="column" data-status="todo">
+          <div class="column-head">
+            <h2>待办</h2>
+            <span class="count" data-count="todo">0</span>
+          </div>
+          <div class="cards" data-cards="todo"></div>
+        </div>
+        <div class="column" data-status="in_progress">
+          <div class="column-head">
+            <h2>进行中</h2>
+            <span class="count" data-count="in_progress">0</span>
+          </div>
+          <div class="cards" data-cards="in_progress"></div>
+        </div>
+        <div class="column" data-status="done">
+          <div class="column-head">
+            <h2>已完成</h2>
+            <span class="count" data-count="done">0</span>
+          </div>
+          <div class="cards" data-cards="done"></div>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
