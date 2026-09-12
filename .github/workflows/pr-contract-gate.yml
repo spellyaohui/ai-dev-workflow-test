@@ -1,0 +1,196 @@
+name: PR Contract Gate
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  validate-contract:
+    name: Validate PR Contract
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate contract metadata
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import sys
+          import urllib.error
+          import urllib.request
+
+          event_path = os.environ["GITHUB_EVENT_PATH"]
+          repository = os.environ["GITHUB_REPOSITORY"]
+          token = os.environ["GITHUB_TOKEN"]
+
+          with open(event_path, "r", encoding="utf-8") as handle:
+              event = json.load(handle)
+
+          pull_request = event.get("pull_request") or {}
+          raw_body = pull_request.get("body") or ""
+
+          def strip_comments(value):
+              return re.sub(r"<!--.*?-->", "", value, flags=re.S)
+
+          # Strip HTML comments before any metadata or section parsing.
+          body = strip_comments(raw_body)
+
+          errors = []
+
+          def fail(message):
+              errors.append(message)
+
+          issue_match = re.search(
+              r"(?m)^Spec-Issue:\s*#([1-9][0-9]*)\s*$",
+              body,
+          )
+          version_match = re.search(
+              r"(?m)^Spec-Version:\s*(v[1-9][0-9]*)\s*$",
+              body,
+          )
+
+          if not issue_match:
+              fail("Missing or invalid `Spec-Issue: #<number>` metadata.")
+          if not version_match:
+              fail("Missing or invalid `Spec-Version: v<number>` metadata.")
+
+          def section_content(title):
+              pattern = (
+                  r"(?ms)^##\s+"
+                  + re.escape(title)
+                  + r"\s*$\n(.*?)(?=^##\s+|\Z)"
+              )
+              match = re.search(pattern, body)
+              if not match:
+                  return None
+              return match.group(1).strip()
+
+          required_sections = [
+              "Contract Source",
+              "Acceptance Criteria",
+              "Affected Contracts",
+              "Verification",
+              "Non-goals",
+              "Known Risks / Limitations",
+          ]
+
+          for title in required_sections:
+              content = section_content(title)
+              if content is None:
+                  fail(f"Missing required PR section: `{title}`.")
+              elif not content:
+                  fail(f"Required PR section is empty: `{title}`.")
+
+          if issue_match and version_match:
+              issue_number = issue_match.group(1)
+              pr_version = version_match.group(1)
+
+              url = (
+                  f"https://api.github.com/repos/{repository}/issues/"
+                  f"{issue_number}"
+              )
+
+              request = urllib.request.Request(
+                  url,
+                  headers={
+                      "Authorization": f"Bearer {token}",
+                      "Accept": "application/vnd.github+json",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                      "User-Agent": "pr-contract-gate",
+                  },
+              )
+
+              try:
+                  with urllib.request.urlopen(request) as response:
+                      issue = json.load(response)
+              except urllib.error.HTTPError as exc:
+                  fail(
+                      "Unable to read referenced Spec Issue "
+                      f"#{issue_number}: GitHub API returned HTTP {exc.code}."
+                  )
+                  issue = None
+              except urllib.error.URLError as exc:
+                  fail(
+                      "Unable to read referenced Spec Issue "
+                      f"#{issue_number}: {exc.reason}."
+                  )
+                  issue = None
+
+              if issue is not None:
+                  if "pull_request" in issue:
+                      fail(
+                          f"Referenced #{issue_number} is a pull request, "
+                          "not a Spec Issue."
+                      )
+                  else:
+                      issue_body = issue.get("body") or ""
+
+                      status_ok = bool(
+                          re.search(
+                              r"(?mi)^Status:\s*APPROVED\s*$",
+                              issue_body,
+                          )
+                          or re.search(
+                              r"(?ms)^###\s+Spec Status\s*$\s*APPROVED\s*(?=^###|\Z)",
+                              issue_body,
+                          )
+                      )
+
+                      if not status_ok:
+                          fail(
+                              f"Spec Issue #{issue_number} is not marked "
+                              "APPROVED."
+                          )
+
+                      legacy_version = re.search(
+                          r"(?mi)^Version:\s*(v[1-9][0-9]*)\s*$",
+                          issue_body,
+                      )
+                      form_version = re.search(
+                          r"(?ms)^###\s+Spec Version\s*$\s*"
+                          r"(v[1-9][0-9]*)\s*(?=^###|\Z)",
+                          issue_body,
+                      )
+
+                      issue_version = None
+                      if legacy_version:
+                          issue_version = legacy_version.group(1)
+                      elif form_version:
+                          issue_version = form_version.group(1)
+
+                      if issue_version is None:
+                          fail(
+                              f"Spec Issue #{issue_number} does not contain "
+                              "a valid Spec Version."
+                          )
+                      elif issue_version != pr_version:
+                          fail(
+                              "Spec version mismatch: PR declares "
+                              f"`{pr_version}` but Issue #{issue_number} "
+                              f"declares `{issue_version}`."
+                          )
+
+          if errors:
+              print("PR Contract Gate: FAIL")
+              for error in errors:
+                  print(f"::error::{error}")
+              sys.exit(1)
+
+          print("PR Contract Gate: PASS")
+          print("Contract metadata and required PR sections are valid.")
+          PY
