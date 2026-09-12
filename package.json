@@ -1,0 +1,19 @@
+{
+  "name": "ai-dev-workflow-test",
+  "version": "1.0.0",
+  "description": "任务看板演示应用（AI 开发工作流测试）",
+  "type": "module",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "license": "MIT"
+}
