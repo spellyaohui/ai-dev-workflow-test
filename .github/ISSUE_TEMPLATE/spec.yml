@@ -1,0 +1,112 @@
+name: Approved Implementation Spec
+description: Create an approved, versioned implementation contract for an implementation change
+title: "Spec: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This form records an approved implementation contract.
+
+        Do not create this Spec Issue until the human approver has explicitly approved the referenced specification version.
+
+  - type: dropdown
+    id: spec_status
+    attributes:
+      label: Spec Status
+      description: Approved implementation contracts must use APPROVED.
+      options:
+        - APPROVED
+    validations:
+      required: true
+
+  - type: input
+    id: spec_version
+    attributes:
+      label: Spec Version
+      description: Use a version such as v1, v2, or v3.
+      placeholder: v1
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the problem this approved change solves.
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_behavior
+    attributes:
+      label: Current Behavior
+      description: Describe the relevant current repository behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: target_behavior
+    attributes:
+      label: Target Behavior
+      description: Describe the approved target behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: List testable acceptance criteria using AC-1, AC-2, AC-3, and so on.
+      placeholder: |
+        - AC-1: ...
+        - AC-2: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals
+      description: State what is explicitly outside the approved scope.
+    validations:
+      required: true
+
+  - type: textarea
+    id: affected_contracts
+    attributes:
+      label: Affected Contracts
+      description: Identify affected files, APIs, CLIs, packages, schemas, workflows, or other contracts.
+    validations:
+      required: true
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: State how the implementation must be verified.
+    validations:
+      required: true
+
+  - type: textarea
+    id: decisions_assumptions
+    attributes:
+      label: Decisions and Assumptions
+      description: Record relevant approved decisions and explicit assumptions.
+    validations:
+      required: true
+
+  - type: textarea
+    id: risks_open_questions
+    attributes:
+      label: Risks and Open Questions
+      description: Record known risks and unresolved questions. Use "None" when there are none.
+    validations:
+      required: true
+
+  - type: textarea
+    id: producer_handoff
+    attributes:
+      label: PR Producer Handoff
+      description: Provide the approved execution handoff for the PR Producer, including acceptance criteria, affected contracts, verification, and non-goals.
+    validations:
+      required: true
